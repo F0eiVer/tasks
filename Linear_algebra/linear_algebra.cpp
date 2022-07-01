@@ -1,52 +1,53 @@
 #include <iostream>
+#include <ostream>
 #include <fstream>
 #include <vector>
 #include <cmath>
 
 using namespace std;
 
-void getMinor(double *arr, double *p, int i, int j, int n){
-    int di, dj;
-    di = 0;
-    for(int ki=0; ki<n-1; ++ki){
-        if(i == ki)
-            di = 1;
-        dj = 0;
-        for(int kj=0; kj<n-1; ++kj){
-            if(j == kj)
-                dj = 1;
-            p[ki*(n-1) + kj] = arr[(ki+di)*n + kj+dj];
-        }
-    }
-}
-
-double Determinate(double* arr, int n){
-    int k=1, m;
-    double d=0;
-    m = n-1;
-    if(n == 1){
-        d = arr[0];
-    }
-    else if(n == 2){
-        d = arr[0]*arr[3] - arr[1]*arr[2];
-    }
-    else{
-        double* tmp = new double[m*m];
-        for(int i=0; i<n; ++i){
-            getMinor(arr, tmp, i, 0, n);
-            d += k * arr[i*n] * Determinate(tmp, m);
-            k = -k;
-        }
-        delete[]tmp;
-    }
-    return d;
-}
-
 class Matrix{
 private:
-    double* arr;
+    vector<double> arr;
     int lines, columns;
     double det;
+
+    void getMinor(vector<double> &arr, vector<double> &p, int i, int j, int n){
+        int di, dj;
+        di = 0;
+        for(int ki=0; ki<n-1; ++ki){
+            if(i == ki)
+                di = 1;
+            dj = 0;
+            for(int kj=0; kj<n-1; ++kj){
+                if(j == kj)
+                    dj = 1;
+                p[ki*(n-1) + kj] = arr[(ki+di)*n + kj+dj];
+            }
+        }
+    }
+
+    double Determinate(vector<double>& arr, int n){
+        int k=1, m;
+        double d=0;
+        m = n-1;
+        if(n == 1){
+            d = arr[0];
+        }
+        else if(n == 2){
+            d = arr[0]*arr[3] - arr[1]*arr[2];
+        }
+        else{
+            vector<double> tmp (m*m);
+            for(int i=0; i<n; ++i){
+                getMinor(arr, tmp, i, 0, n);
+                d += k * arr[i*n] * Determinate(tmp, m);
+                k = -k;
+            }
+            tmp.clear();
+        }
+        return d;
+    }
 
 public:
 
@@ -54,7 +55,7 @@ public:
         if(lines < 0 || columns < 0){
             this->lines = 0;
             this->columns = 0;
-            cout << "you entered incorrect data, so a null matrix was created";
+            cerr << "you entered incorrect data, so a null matrix was created";
         }
         else{
             if(lines == 0 || columns == 0){
@@ -64,39 +65,92 @@ public:
             else{
                 this->lines = lines;
                 this->columns = columns;
-                arr = new double[lines*columns];
+                arr = vector<double> (lines*columns);
             }
         }
+
     }
+    Matrix(vector<vector<double>> &a){
+        if(a.size()>0){
+            lines = (int)a.size();
+            columns = (int)a[0].size();
+            for(int i=0; i<lines; ++i){
+                for(int j=0; j<columns; ++j){
+                    arr[i*columns + j] =a[i][j];
+                }
+            }
+            countDet();
+        }
+        else{
+            lines = columns = det = 0;
+            arr = vector<double> (0);
+        }
+    }
+
+    Matrix(vector<double> &a, int lines, int columns){
+        if(lines < 0 || columns < 0){
+            this->lines = 0;
+            this->columns = 0;
+            cerr << "you entered incorrect data, so a null matrix was created";
+        }
+        else{
+            if(lines == 0 || columns == 0){
+                this->lines = 0;
+                this->columns = 0;
+            }
+            else{
+                this->lines = lines;
+                this->columns = columns;
+                arr = vector<double> (lines*columns);
+            }
+        }
+        for(int i=0; i<lines*columns; ++i){
+            arr[i] = a[i];
+        }
+    }
+
     Matrix(){
-        columns = 0;
-        lines = 0;
-        det = 0;
-        arr = new double[0];
+        columns = lines = det = 0;
+        arr = vector<double> (0);
     }
     Matrix(const Matrix &obj){
         columns = obj.columns;
         lines = obj.lines;
         det = obj.det;
 
-        arr = new double[lines*columns];
+        arr = vector<double> (lines*columns);
         for(int i=0; i<lines; ++i){
             for(int j=0; j<columns; ++j){
                 arr[i*columns + j] = obj.arr[i*columns + j];
             }
         }
     }
-    ~Matrix(){
-        delete[]arr;
+    Matrix(Matrix&& obj){
+        columns = obj.columnsGet();
+        lines = obj.linesGet();
+        det = detGet();
+        arr = obj.arrGetAll();
+        obj.clearM();
     }
 
-    int lines_g(){
+    ~Matrix(){
+        arr.clear();
+    }
+
+    void clearM(){
+        lines = 0;
+        columns = 0;
+        det = 0;
+        arr.clear();
+    }
+
+    int linesGet() const{
         return lines;
     }
-    int columns_g(){
+    int columnsGet() const{
         return columns;
     }
-    double arr_g(int i, int j){
+    double arrGet(int i, int j) const{
         if(i*columns + j < lines*columns && i*columns + j >= 0)
             return arr[i*columns + j];
         else{
@@ -104,7 +158,10 @@ public:
             return 1./-0;
         }
     }
-    void arr_set(double x, int i, int j){
+    vector<double> arrGetAll(){
+        return arr;
+    }
+    void arrSet(double x, int i, int j){
         if(i*columns + j < lines*columns && i*columns + j >= 0)
             arr[i*columns + j] = x;
         else{
@@ -112,7 +169,7 @@ public:
         }
     }
 
-    void fill_m(){
+    void fillM(){
         cout << "fill the matrix" << "\n";
         for(int i=0; i<lines; ++i){
             for(int j=0; j<columns; ++j){
@@ -120,7 +177,14 @@ public:
             }
         }
     }
-    void print_m(){
+    void countDet(){
+        if(lines == columns)
+            det = this->Determinate(arr, lines);
+        else{
+            det = 1./-0;
+        }
+    }
+    void printM(){
         if(lines == 0 || columns == 0)
             cout << 0;
         for(int i=0; i<lines; ++i){
@@ -131,12 +195,7 @@ public:
         }
     }
 
-    double det_g(){
-        if(lines == columns)
-            det = Determinate(arr, lines);
-        else{
-            det = 1./-0;
-        }
+    double detGet() const{
         return det;
     }
 
@@ -157,28 +216,41 @@ public:
         delete[]tmp_arr;
     }
 
-    Matrix operator = (Matrix m){
-        columns = m.columns_g();
-        lines = m.lines_g();
-        det = m.det_g();
-        delete[]arr;
+    Matrix operator = (const Matrix& m){
+        columns = m.columnsGet();
+        lines = m.linesGet();
+        det = m.detGet();
+        arr.clear();
 
-        arr = new double[lines*columns];
+        arr = vector<double> (lines*columns);
         for(int i=0; i<lines; ++i){
             for(int j=0; j<columns; ++j){
-                arr[i*columns + j] = m.arr_g(i, j);
+                arr[i*columns + j] = m.arrGet(i, j);
             }
         }
         return *this;
     }
 
-    bool operator == (Matrix m){
-        if(this->columns != m.columns_g() || this->lines != m.lines_g())
+    Matrix operator = (Matrix&& m){
+        if(this != &m){
+            arr.clear();
+            arr = m.arrGetAll();
+            lines = m.linesGet();
+            columns = m.columnsGet();
+            det = m.detGet();
+            m.clearM();
+        }
+
+        return *this;
+    }
+
+    bool operator == (const Matrix& m){
+        if(this->columns != m.columnsGet() || this->lines != m.linesGet())
             return false;
         else{
             for(int i=0; i<this->lines; ++i){
                 for(int j=0; j<this->columns; ++j){
-                    if(this->arr[i*columns + j] != m.arr_g(i, j))
+                    if(this->arr[i*columns + j] != m.arrGet(i, j))
                         return false;
                 }
             }
@@ -186,13 +258,13 @@ public:
         }
     }
 
-    bool operator != (Matrix m){
-        if(this->columns != m.columns_g() || this->lines != m.lines_g())
+    bool operator != (const Matrix& m){
+        if(this->columns != m.columnsGet() || this->lines != m.linesGet())
             return true;
         else{
             for(int i=0; i<this->lines; ++i){
                 for(int j=0; j<this->columns; ++j){
-                    if(this->arr[i*columns + j] != m.arr_g(i, j))
+                    if(this->arr[i*columns + j] != m.arrGet(i, j))
                         return true;
                 }
             }
@@ -200,11 +272,11 @@ public:
         }
     }
 
-    Matrix operator + (Matrix m){
-        if(columns == m.columns_g() && lines == m.lines_g()){
+    Matrix operator + (Matrix& m){
+        if(columns == m.columnsGet() && lines == m.linesGet()){
             for(int i=0; i<lines; ++i){
                 for(int j=0; j<columns; ++j){
-                    m.arr_set(m.arr_g(i, j) + arr[i*columns + j], i, j);
+                    m.arrSet(m.arrGet(i, j) + arr[i*columns + j], i, j);
                 }
             }
             return m;
@@ -215,11 +287,11 @@ public:
         }
     }
 
-    Matrix operator += (Matrix m){
-        if(columns == m.columns_g() && lines == m.lines_g()){
+    Matrix operator += (const Matrix& m){
+        if(columns == m.columnsGet() && lines == m.linesGet()){
             for(int i=0; i<lines; ++i){
                 for(int j=0; j<columns; ++j){
-                    arr[i*columns + j] += m.arr_g(i, j);
+                    arr[i*columns + j] += m.arrGet(i, j);
                 }
             }
         }
@@ -229,11 +301,11 @@ public:
         return *this;
     }
 
-    Matrix operator -= (Matrix m){
-        if(columns == m.columns_g() && lines == m.lines_g()){
+    Matrix operator -= (const Matrix& m){
+        if(columns == m.columnsGet() && lines == m.linesGet()){
             for(int i=0; i<lines; ++i){
                 for(int j=0; j<columns; ++j){
-                    arr[i*columns + j] -= m.arr_g(i, j);
+                    arr[i*columns + j] -= m.arrGet(i, j);
                 }
             }
         }
@@ -243,11 +315,11 @@ public:
         return *this;
     }
 
-    Matrix operator - (Matrix m){
-        if(columns == m.columns_g() && lines == m.lines_g()){
+    Matrix operator - (Matrix& m){
+        if(columns == m.columnsGet() && lines == m.linesGet()){
             for(int i=0; i<lines; ++i){
                 for(int j=0; j<columns; ++j){
-                    m.arr_set(arr[i*columns + j] - m.arr_g(i, j), i, j);
+                    m.arrSet(arr[i*columns + j] - m.arrGet(i, j), i, j);
                 }
             }
             return m;
@@ -258,17 +330,17 @@ public:
         }
     }
 
-    Matrix operator * (Matrix m){
-        if(columns == m.lines_g()){
-            Matrix tmp_m(lines, m.columns_g());
+    Matrix operator * (const Matrix& m){
+        if(columns == m.linesGet()){
+            Matrix tmp_m(lines, m.columnsGet());
             double tmp;
             for(int i=0; i<lines; ++i){
-                for(int j=0; j<m.columns_g(); ++j){
+                for(int j=0; j<m.columnsGet(); ++j){
                     tmp = 0;
                     for(int k=0; k<columns; ++k){
-                        tmp += arr[i*columns + k] * m.arr_g(k, j);
+                        tmp += arr[i*columns + k] * m.arrGet(k, j);
                     }
-                    tmp_m.arr_set(tmp, i, j);
+                    tmp_m.arrSet(tmp, i, j);
                 }
             }
             return tmp_m;
@@ -285,7 +357,7 @@ public:
         for(int i=0; i<lines; ++i){
             for(int j=0; j<columns; ++j){
                 tmp = arr[i*columns + j]*x;
-                tmp_m.arr_set(tmp, i,j);
+                tmp_m.arrSet(tmp, i,j);
             }
         }
         return tmp_m;
@@ -297,33 +369,33 @@ public:
         for(int i=0; i<lines; ++i){
             for(int j=0; j<columns; ++j){
                 tmp = arr[i*columns + j]/x;
-                tmp_m.arr_set(tmp, i,j);
+                tmp_m.arrSet(tmp, i,j);
             }
         }
         return tmp_m;
     }
 
-    Matrix operator *= (Matrix m){
-        if(columns == m.lines_g()){
-            Matrix tmp_m(lines, m.columns_g());
+    Matrix operator *= (const Matrix& m){
+        if(columns == m.linesGet()){
+            Matrix tmp_m(lines, m.columnsGet());
             double tmp;
             for(int i=0; i<lines; ++i){
-                for(int j=0; j<m.columns_g(); ++j){
+                for(int j=0; j<m.columnsGet(); ++j){
                     tmp = 0;
                     for(int k=0; k<columns; ++k){
-                        tmp += arr[i*columns + k] * m.arr_g(k, j);
+                        tmp += arr[i*columns + k] * m.arrGet(k, j);
                     }
-                    tmp_m.arr_set(tmp, i, j);
+                    tmp_m.arrSet(tmp, i, j);
                 }
             }
-            lines = tmp_m.lines_g();
-            columns = tmp_m.columns_g();
-            det = tmp_m.det_g();
-            delete[]arr;
-            arr = new double[lines*columns];
+            lines = tmp_m.linesGet();
+            columns = tmp_m.columnsGet();
+            det = tmp_m.detGet();
+            arr.clear();
+            arr = vector<double> (lines*columns);
             for(int i=0; i<lines; ++i){
                 for(int j=0; j<columns; ++j){
-                    arr[i*columns + j] = tmp_m.arr_g(i, j);
+                    arr[i*columns + j] = tmp_m.arrGet(i, j);
                 }
             }
         }
@@ -356,7 +428,7 @@ public:
             Matrix ans;
             for(int i=0; i<lines; ++i){
                 for(int j=0; j<columns; ++j){
-                    m.arr_set(arr[i*columns + j], i, j);
+                    m.arrSet(arr[i*columns + j], i, j);
                 }
             }
             ans = m;
@@ -373,12 +445,34 @@ public:
 
 };
 
+ostream& operator << (ostream &os, Matrix &m){
+    if(m.linesGet() == 0 || m.columnsGet() == 0)
+        os << 0;
+    for(int i=0; i<m.linesGet(); ++i){
+        for(int j=0; j<m.columnsGet(); ++j){
+            os << m.arrGet(i, j)<< " ";
+        }
+        os << "\n";
+        }
+    return os;
+}
+
+istream& operator >> (istream &is, Matrix &m){
+    double tmp;
+    for(int i=0; i<m.linesGet(); ++i){
+        for(int j=0; j<m.columnsGet(); ++j){
+            is >> tmp;
+            m.arrSet(tmp, i, j);
+        }
+    }
+    return is;
+}
+
+
 int main(){
     ifstream fin("input.txt");
     ofstream fout("output.txt");
-    Matrix A(2, 2);
-    Matrix C(2, 2);
-    Matrix B;
+
 
     fin.close();
     fout.close();
