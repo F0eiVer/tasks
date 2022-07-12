@@ -50,12 +50,56 @@ struct Stack_nums{
     }
 };
 
+struct Stack{
+    ull siz=0;
+    vector<char> arr;
+
+    void push(char x){
+        arr.push_back(x);
+        siz++;
+    }
+
+    void pop(){
+        siz--;
+        arr.pop_back();
+    }
+
+    char top(){
+        return arr[siz-1];
+    }
+};
+
+//Correct bracket sequence
+bool CBS(string str){
+    Stack st;
+    for(ull i=0; i<(ull)str.size(); ++i){
+        if(str[i] == '(')
+            st.push(str[i]);
+        else if(str[i] == ')'){
+            if(!st.siz)
+                return false;
+            st.pop();
+        }
+    }
+    if(!st.siz)
+        return true;
+    return false;
+}
+
+bool Correctness(string str){
+    for(ull i=1; i<(ull)str.size(); ++i){
+        if(((int)str[i-1] > 47 && (int)str[i-1] < 58) && (((int)str[i] > 64 && (int)str[i] < 91) || ((int)str[i] > 96 && (int)str[i] < 123)))
+            return false;
+    }
+    return true;
+}
+
 
 int main(){
     ifstream fin("input.txt");
     ofstream fout("output.txt");
     string exp, tmp_str, tmpC;
-    int f = 0, p = 0, k = 1;
+    int f = 0, p = 1, k = 1;
     Op tmpOp;
     vector<string> functions = {"sin", "cos", "tan", "sqrt"};
     double tmp = 0., tmp1, tmp2, tmpDif = 10., sign = 1;
@@ -73,6 +117,20 @@ int main(){
         }
         while(cin.get() != '\n');
 
+        if(!CBS(exp)){
+            cerr << "incorrect input. Wrong bracket sequence\n";
+            cout << "----------------------------------------" << "\n";
+            tmp_str = exp = "";
+            continue;
+        }
+
+        if(!Correctness(exp)){
+            cerr << "incorrect input\n";
+            cout << "----------------------------------------" << "\n";
+            tmp_str = exp = "";
+            continue;
+        }
+
         for(int i=0; i<(int)exp.size(); ++i){
             if((int)exp[i] > 47 && (int)exp[i] < 58){
                 p = 0;
@@ -85,8 +143,31 @@ int main(){
                     tmpDif *= 10;
                 }
             }
+            else if(f == 1 && exp[i] == '.'){
+                cerr << "You have written incorrect data\n";
+                p = 1;
+                while(nums.siz){
+                    nums.pop();
+                }
+                while(oper.siz){
+                    oper.pop();
+                }
+                break;
+
+            }
             else if(exp[i] == '.'){
                 f = 1;
+            }
+            else if(exp[i] == ','){
+                if(!p){
+                    nums.push(tmp*sign);
+                    p = 1;
+                }
+                sign = 1.;
+                tmp = 0.;
+                f = 0;
+                tmpDif = 10.;
+                continue;
             }
             else{
                 if(!p){
@@ -98,9 +179,12 @@ int main(){
                 f = 0;
                 tmpDif = 10.;
 
-                if(exp[i] == '-'){
-                    if(!nums.siz || (i>0 && (exp[i-1] == '(')))
+                if(exp[i] == '-' || exp[i] == '+'){
+                    if((!nums.siz || (i>0 && (exp[i-1] == '('))) && exp[i] == '-')
                         sign = -sign;
+                    else if(!nums.siz || (i>0 && (exp[i-1] == '('))){
+                        continue;
+                    }
                 }
                 tmpOp.op = "";
                 tmpOp.op += exp[i];
@@ -116,7 +200,7 @@ int main(){
                 else if(((int)exp[i] > 64 && (int)exp[i] < 91) || ((int)exp[i] > 96 && (int)exp[i] < 123)){
                     tmpOp.priority = 5;
                     i++; k = 1;
-                    while(exp[i] != '(')
+                    while(exp[i] != '(' && i < (int)exp.size())
                         tmpOp.op += exp[i++];
                     i--;
                     for(int i=0; i<(int)functions.size(); ++i){
@@ -125,52 +209,61 @@ int main(){
                     }
                     if(k){
                         cerr << "unknown function: " << tmpOp.op << "\n";
-                        return 0;
+                        p = 1;
+                        while(nums.siz){
+                            nums.pop();
+                        }
+                        while(oper.siz){
+                            oper.pop();
+                        }
+                        break;
                     }
                 }
 
                 if(exp[i] == ')'){
-                    while(1){
-                        tmpC = oper.top().op; oper.pop();
-                        if(tmpC[0] == '(' && (oper.top().op == "sin" || oper.top().op == "sqrt" || oper.top().op == "cos" || oper.top().op == "tan")){
-                            if(oper.top().op == "sin"){
-                                tmp1 = nums.top(); nums.pop();
-                                nums.push(sin(tmp1));
+                    if(oper.siz){
+                        while(1){
+                            tmpC = oper.top().op; oper.pop();
+                            if(tmpC[0] == '(' && (oper.top().op == "sin" || oper.top().op == "sqrt" || oper.top().op == "cos" || oper.top().op == "tan")){
+                                if(oper.top().op == "sin"){
+                                    tmp1 = nums.top(); nums.pop();
+                                    nums.push(sign * sin(tmp1));
+                                }
+                                else if(oper.top().op == "cos"){
+                                    tmp1 = nums.top(); nums.pop();
+                                    nums.push(sign * cos(tmp1));
+                                }
+                                else if(oper.top().op == "tan"){
+                                    tmp1 = nums.top(); nums.pop();
+                                    nums.push(sign * tan(tmp1));
+                                }
+                                else if(oper.top().op == "sqrt"){
+                                    tmp2 = nums.top(); nums.pop();
+                                    tmp1 = nums.top(); nums.pop();
+                                    nums.push(sign * pow(tmp1, 1./tmp2));
+                                }
+                                oper.pop();
+                                break;
                             }
-                            else if(oper.top().op == "cos"){
-                                tmp1 = nums.top(); nums.pop();
-                                nums.push(cos(tmp1));
+                            else if(tmpC[0] == '(')
+                                break;
+                            tmp2 = nums.top(); nums.pop();
+                            tmp1 = nums.top(); nums.pop();
+                            if(tmpC[0] == '*'){
+                                nums.push(tmp1*tmp2);
                             }
-                            else if(oper.top().op == "tan"){
-                                tmp1 = nums.top(); nums.pop();
-                                nums.push(tan(tmp1));
+                            else if(tmpC[0] == '/'){
+                                nums.push(tmp1/tmp2);
                             }
-                            else if(oper.top().op == "sqrt"){
-                                tmp2 = nums.top(); nums.pop();
-                                tmp1 = nums.top(); nums.pop();
-                                nums.push(pow(tmp1, 1/tmp2));
+                            else if(tmpC[0] == '^'){
+                                nums.push(pow(tmp1, tmp2));
                             }
-                            oper.pop();
-                            break;
-                        }
-                        else if(tmpC[0] == '(')
-                            break;
-                        tmp2 = nums.top(); nums.pop();
-                        tmp1 = nums.top(); nums.pop();
-                        if(tmpC[0] == '*'){
-                            nums.push(tmp1*tmp2);
-                        }
-                        else if(tmpC[0] == '/'){
-                            nums.push(tmp1/tmp2);
-                        }
-                        else if(tmpC[0] == '^'){
-                            nums.push(pow(tmp1, tmp2));
-                        }
-                        else if(tmpC[0] == '-'){
-                            nums.push(tmp1-tmp2);
-                        }
-                        else{
-                            nums.push(tmp1+tmp2);
+                            else if(tmpC[0] == '-'){
+                                nums.push(tmp1-tmp2);
+                            }
+                            else{
+                                nums.push(tmp1+tmp2);
+                            }
                         }
                     }
                 }
@@ -209,6 +302,20 @@ int main(){
             tmpDif = 10.;
         }
 
+        if((oper.siz || sign < 0) && !nums.siz){
+            cerr << "incorrect input\n";
+            cout << "----------------------------------------" << "\n";
+            while(nums.siz){
+                nums.pop();
+            }
+            while(oper.siz){
+                oper.pop();
+            }
+            tmp_str = exp = "";
+            sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1;
+            continue;
+        }
+
         while(oper.siz){
             tmpC = oper.top().op; oper.pop();
             if(tmpC == "sin" || tmpC == "cos" || tmpC == "tan"){
@@ -219,16 +326,16 @@ int main(){
                 tmp1 = nums.top(); nums.pop();
             }
             if(tmpC == "sin"){
-                nums.push(sin(tmp1));
+                nums.push(sign * sin(tmp1));
             }
             else if(tmpC == "cos"){
-                nums.push(cos(tmp1));
+                nums.push(sign * cos(tmp1));
             }
             else if(tmpC == "tan"){
-                nums.push(tan(tmp1));
+                nums.push(sign * tan(tmp1));
             }
             else if(tmpC == "sqrt"){
-                nums.push(pow(tmp1, 1/tmp2));
+                nums.push(sign * pow(tmp1, 1./tmp2));
             }
             else if(tmpC[0] == '*'){
                 nums.push(tmp1*tmp2);
@@ -247,7 +354,8 @@ int main(){
             }
 
         }
-        cout << nums.top() << "\n";
+        if(nums.siz)
+            cout << nums.top() << "\n";
         cout << "----------------------------------------" << "\n";
         while(nums.siz){
             nums.pop();
@@ -256,6 +364,7 @@ int main(){
             oper.pop();
         }
         tmp_str = exp = "";
+        sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1;
 
     }
 
