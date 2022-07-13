@@ -87,16 +87,20 @@ bool CBS(string str){
 }
 
 bool Correctness(string str){
-    int f=0, c=0;
+    int f=0, c=0, b=0;
     if((int)str[0] > 47 && (int)str[0] < 58)
         f = 1;
-    if(str[0] == '+' || str[0] == '-' || str[0] == '*' || str[0] == '^' || str[0] == '/')
+    if((str[0] == '+' || str[0] == '-' || str[0] == '*' || str[0] == '^' || str[0] == '/') || (((int)str[0] > 64 && (int)str[0] < 91) || ((int)str[0] > 96 && (int)str[0] < 123)))
         c = 1;
+    if(str[0] == '(')
+        b = 1;
     for(ull i=1; i<(ull)str.size(); ++i){
         if((int)str[i] > 47 && (int)str[i] < 58)
             f = 1;
         if((str[i] == '+' || str[i] == '-' || str[i] == '*' || str[i] == '^' || str[i] == '/') || (((int)str[i] > 64 && (int)str[i] < 91) || ((int)str[i] > 96 && (int)str[i] < 123)))
             c = 1;
+        if((str[i] == '('))
+            b = 1;
         if((((int)str[i-1] > 47 && (int)str[i-1] < 58) || (str[i-1] == ')')) && (((int)str[i] > 64 && (int)str[i] < 91) || ((int)str[i] > 96 && (int)str[i] < 123)))
             return false;
         if((str[i-1] == ')') && ((int)str[i] > 47 && (int)str[i] < 58))
@@ -107,7 +111,7 @@ bool Correctness(string str){
             return false;
 
     }
-    if(f && c)
+    if((f && !b) || (f && c))
         return true;
     return false;
 }
@@ -212,7 +216,6 @@ int main(){
                         nums.push(tmp*sign);
                         c = 0;
                         b = abs(b-1);
-                        sign *= -1;
                     }
                     else
                         nums.push(tmp);
@@ -291,6 +294,7 @@ int main(){
                                     nums.push(tmp1);
                                     sign *= -1;
                                     b = abs(b-1);
+                                    c = 0;
                                 }
                                 break;
                             }
@@ -342,7 +346,14 @@ int main(){
         }
         //cout << nums.top() << "\n";
         if(!p){
-            nums.push(tmp*sign);
+            if(c){
+                nums.push(tmp*sign);
+                c = 0;
+                b = abs(b-1);
+                sign *= -1;
+                }
+            else
+                nums.push(tmp);
         }
         //cout << nums.top() << "\n";
 
