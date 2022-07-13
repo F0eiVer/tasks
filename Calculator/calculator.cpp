@@ -117,7 +117,7 @@ int main(){
     ifstream fin("input.txt");
     ofstream fout("output.txt");
     string exp, tmp_str, tmpC;
-    int f = 0, p = 1, k = 1, b = 0;
+    int f = 0, p = 1, k = 1, b = 0, c = 0;
     Op tmpOp;
     vector<string> functions = {"sin", "cos", "tan", "sqrt"};
     double tmp = 0., tmp1, tmp2, tmpDif = 10., sign = 1;
@@ -190,6 +190,8 @@ int main(){
             else if((!nums.siz || (i>0 && (exp[i-1] == '('))) && p && exp[i] == '-'){
                 sign = -sign;
                 b = abs(b-1);
+                if((int)exp[i+1] > 47 && (int)exp[i+1] < 58)
+                    c = 1;
             }
             else if((!nums.siz || (i>0 && (exp[i-1] == '('))) && p && exp[i] == '+'){
                 cerr << "incorrect input\n";
@@ -206,7 +208,14 @@ int main(){
             }
             else{
                 if(!p){
-                    nums.push(tmp);
+                    if(c){
+                        nums.push(tmp*sign);
+                        c = 0;
+                        b = abs(b-1);
+                        sign *= -1;
+                    }
+                    else
+                        nums.push(tmp);
                     p = 1;
                 }
                 tmp = 0.;
@@ -331,9 +340,12 @@ int main(){
                 }
             }
         }
+        //cout << nums.top() << "\n";
         if(!p){
             nums.push(tmp*sign);
         }
+        //cout << nums.top() << "\n";
+
 
         if((oper.siz || sign < 0) && !nums.siz){
             cerr << "incorrect input\n";
@@ -345,7 +357,7 @@ int main(){
                 oper.pop();
             }
             tmp_str = exp = "";
-            sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1; b = 0;
+            sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1; b = 0; c = 0;
             continue;
         }
 
@@ -398,7 +410,7 @@ int main(){
             oper.pop();
         }
         tmp_str = exp = "";
-        sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1; tmp = 0.; b = 0;
+        sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1; tmp = 0.; b = 0; c = 0;
     }
 
     fin.close();
