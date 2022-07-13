@@ -87,23 +87,27 @@ bool CBS(string str){
 }
 
 bool Correctness(string str){
-    int f=0;
-    if((int)str[0] > 47 && (int)str[0] < 58 && (str[0] == '+' || str[0] == '-' || str[0] == '*' || str[0] == '^' || str[0] == '/'))
+    int f=0, c=0;
+    if((int)str[0] > 47 && (int)str[0] < 58)
         f = 1;
+    if(str[0] == '+' || str[0] == '-' || str[0] == '*' || str[0] == '^' || str[0] == '/')
+        c = 1;
     for(ull i=1; i<(ull)str.size(); ++i){
-        if((int)str[i] > 47 && (int)str[i] < 58 && (str[i] == '+' || str[i] == '-' || str[i] == '*' || str[i] == '^' || str[i] == '/'))
+        if((int)str[i] > 47 && (int)str[i] < 58)
             f = 1;
+        if((str[i] == '+' || str[i] == '-' || str[i] == '*' || str[i] == '^' || str[i] == '/') || (((int)str[i] > 64 && (int)str[i] < 91) || ((int)str[i] > 96 && (int)str[i] < 123)))
+            c = 1;
         if((((int)str[i-1] > 47 && (int)str[i-1] < 58) || (str[i-1] == ')')) && (((int)str[i] > 64 && (int)str[i] < 91) || ((int)str[i] > 96 && (int)str[i] < 123)))
             return false;
         if((str[i-1] == ')') && ((int)str[i] > 47 && (int)str[i] < 58))
             return false;
         if((str[i] == '+' || str[i] == '-' || str[i] == '*' || str[i] == '^' || str[i] == '/') && (str[i-1] == '+' || str[i-1] == '-' || str[i-1] == '*' || str[i-1] == '^' || str[i-1] == '/'))
             return false;
-        if((str[i-1] == '(') && (str[i] == ')'))
+        if((str[i-1] == ')') && (str[i] == '('))
             return false;
 
     }
-    if(f)
+    if(f && c)
         return true;
     return false;
 }
@@ -186,7 +190,6 @@ int main(){
             else if((!nums.siz || (i>0 && (exp[i-1] == '('))) && p && exp[i] == '-'){
                 sign = -sign;
                 b = abs(b-1);
-
             }
             else if((!nums.siz || (i>0 && (exp[i-1] == '('))) && p && exp[i] == '+'){
                 cerr << "incorrect input\n";
@@ -329,7 +332,7 @@ int main(){
             }
         }
         if(!p){
-            nums.push(tmp);
+            nums.push(tmp*sign);
         }
 
         if((oper.siz || sign < 0) && !nums.siz){
@@ -348,7 +351,7 @@ int main(){
 
         while(oper.siz){
             tmpC = oper.top().op; oper.pop();
-            if(tmpC == "sin" || tmpC == "cos" || tmpC == "tan" ){
+            if(tmpC == "sin" || tmpC == "cos" || tmpC == "tan"){
                 tmp1 = nums.top(); nums.pop();
             }
             else{
@@ -384,6 +387,7 @@ int main(){
             }
 
         }
+
         if(nums.siz)
             cout << nums.top() << "\n";
         cout << "----------------------------------------" << "\n";
@@ -395,7 +399,6 @@ int main(){
         }
         tmp_str = exp = "";
         sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1; tmp = 0.; b = 0;
-
     }
 
     fin.close();
