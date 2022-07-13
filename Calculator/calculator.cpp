@@ -88,16 +88,18 @@ bool CBS(string str){
 
 bool Correctness(string str){
     int f=0;
-    if((int)str[0] > 47 && (int)str[0] < 58)
+    if((int)str[0] > 47 && (int)str[0] < 58 && (str[0] == '+' || str[0] == '-' || str[0] == '*' || str[0] == '^' || str[0] == '/'))
         f = 1;
     for(ull i=1; i<(ull)str.size(); ++i){
-        if((int)str[i] > 47 && (int)str[i] < 58)
+        if((int)str[i] > 47 && (int)str[i] < 58 && (str[i] == '+' || str[i] == '-' || str[i] == '*' || str[i] == '^' || str[i] == '/'))
             f = 1;
         if((((int)str[i-1] > 47 && (int)str[i-1] < 58) || (str[i-1] == ')')) && (((int)str[i] > 64 && (int)str[i] < 91) || ((int)str[i] > 96 && (int)str[i] < 123)))
             return false;
         if((str[i-1] == ')') && ((int)str[i] > 47 && (int)str[i] < 58))
             return false;
         if((str[i] == '+' || str[i] == '-' || str[i] == '*' || str[i] == '^' || str[i] == '/') && (str[i-1] == '+' || str[i-1] == '-' || str[i-1] == '*' || str[i-1] == '^' || str[i-1] == '/'))
+            return false;
+        if((str[i-1] == '(') && (str[i] == ')'))
             return false;
 
     }
