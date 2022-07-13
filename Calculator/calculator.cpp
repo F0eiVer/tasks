@@ -87,14 +87,23 @@ bool CBS(string str){
 }
 
 bool Correctness(string str){
+    int f=0;
+    if((int)str[0] > 47 && (int)str[0] < 58)
+        f = 1;
     for(ull i=1; i<(ull)str.size(); ++i){
+        if((int)str[i] > 47 && (int)str[i] < 58)
+            f = 1;
         if((((int)str[i-1] > 47 && (int)str[i-1] < 58) || (str[i-1] == ')')) && (((int)str[i] > 64 && (int)str[i] < 91) || ((int)str[i] > 96 && (int)str[i] < 123)))
+            return false;
+        if((str[i-1] == ')') && ((int)str[i] > 47 && (int)str[i] < 58))
             return false;
         if((str[i] == '+' || str[i] == '-' || str[i] == '*' || str[i] == '^' || str[i] == '/') && (str[i-1] == '+' || str[i-1] == '-' || str[i-1] == '*' || str[i-1] == '^' || str[i-1] == '/'))
             return false;
 
     }
-    return true;
+    if(f)
+        return true;
+    return false;
 }
 
 
@@ -102,7 +111,7 @@ int main(){
     ifstream fin("input.txt");
     ofstream fout("output.txt");
     string exp, tmp_str, tmpC;
-    int f = 0, p = 1, k = 1, l = 1;
+    int f = 0, p = 1, k = 1, b = 0;
     Op tmpOp;
     vector<string> functions = {"sin", "cos", "tan", "sqrt"};
     double tmp = 0., tmp1, tmp2, tmpDif = 10., sign = 1;
@@ -164,10 +173,9 @@ int main(){
             }
             else if(exp[i] == ','){
                 if(!p){
-                    nums.push(tmp*sign);
+                    nums.push(tmp);
                     p = 1;
                 }
-                sign = 1.;
                 tmp = 0.;
                 f = 0;
                 tmpDif = 10.;
@@ -175,6 +183,8 @@ int main(){
             }
             else if((!nums.siz || (i>0 && (exp[i-1] == '('))) && p && exp[i] == '-'){
                 sign = -sign;
+                b = abs(b-1);
+
             }
             else if((!nums.siz || (i>0 && (exp[i-1] == '('))) && p && exp[i] == '+'){
                 cerr << "incorrect input\n";
@@ -191,14 +201,12 @@ int main(){
             }
             else{
                 if(!p){
-                    nums.push(tmp*sign);
+                    nums.push(tmp);
                     p = 1;
-                    sign = 1.;
                 }
                 tmp = 0.;
                 f = 0;
                 tmpDif = 10.;
-                l = 1;
 
                 tmpOp.op = "";
                 tmpOp.op += exp[i];
@@ -262,13 +270,14 @@ int main(){
                                 oper.pop();
                                 break;
                             }
-                            else if(tmpC[0] == '(' && l){
-                                tmp1 = nums.top(); nums.pop();
-                                tmp1 *= sign;
-                                nums.push(tmp1);
-                                break;
-                            }
                             else if(tmpC[0] == '('){
+                                if(b){
+                                    tmp1 = nums.top(); nums.pop();
+                                    tmp1 *= sign;
+                                    nums.push(tmp1);
+                                    sign *= -1;
+                                    b = abs(b-1);
+                                }
                                 break;
                             }
                             tmp2 = nums.top(); nums.pop();
@@ -288,14 +297,13 @@ int main(){
                             else{
                                 nums.push(tmp1+tmp2);
                             }
-                            l = 0;
                         }
                     }
                 }
                 else if((!oper.siz || (tmpOp.priority > oper.top().priority) || oper.top().op[0] == '(' || tmpOp.priority == 4)){
                     oper.push(tmpOp);
                 }
-                else if(sign > 0){
+                else{
                     tmpC = oper.top().op; oper.pop();
                     tmp2 = nums.top(); nums.pop();
                     tmp1 = nums.top(); nums.pop();
@@ -318,9 +326,8 @@ int main(){
                 }
             }
         }
-
         if(!p){
-            nums.push(tmp*sign);
+            nums.push(tmp);
         }
 
         if((oper.siz || sign < 0) && !nums.siz){
@@ -333,7 +340,7 @@ int main(){
                 oper.pop();
             }
             tmp_str = exp = "";
-            sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1;
+            sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1; b = 0;
             continue;
         }
 
@@ -385,7 +392,7 @@ int main(){
             oper.pop();
         }
         tmp_str = exp = "";
-        sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1; tmp = 0.; l = 1;
+        sign = 1; p = 1; f = 0; tmpDif = 10.; k = 1; tmp = 0.; b = 0;
 
     }
 
